@@ -43,6 +43,23 @@ func (r *Registry) Exec(name string) (chan bool, chan error, error) {
 	return nil, nil, errors.New("Job doesnt exist")
 }
 
+func (r *Registry) TickerExecuter() {
+	for k := range r.Jobs {
+		if r.Jobs[k].Ticker != nil {
+			select {
+			case <-r.Jobs[k].Ticker.C:
+				r.Exec(k)
+			}
+		}
+	}
+}
+
 func New() *Registry {
-	return &Registry{Jobs: make(map[string]Job)}
+	r := Registry{Jobs: make(map[string]Job)}
+	go func() {
+		for {
+			r.TickerExecuter()
+		}
+	}()
+	return &r
 }

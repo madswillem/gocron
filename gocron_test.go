@@ -98,3 +98,26 @@ func TestExec(t *testing.T) {
 		})
 	}
 }
+func TestTicker(t *testing.T) {
+	r := New()
+	executed := false
+	err := r.Add(Job{
+		Name: "test_ticker",
+		Job: func(wg *sync.WaitGroup, done chan bool, err chan error) {
+			executed = true
+		},
+		Ticker: time.NewTicker(5 * time.Millisecond),
+	})
+	if err != nil {
+		t.Errorf("Error: %e", err)
+	}
+	go func() {
+		// Allow some time for the ticker to tick
+		time.Sleep(15 * time.Millisecond)
+		r.TickerExecuter()
+	}()
+	time.Sleep(20 * time.Millisecond)
+	if !executed {
+		t.Errorf("Function was not executed. %v", !executed)
+	}
+}
